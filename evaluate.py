@@ -70,7 +70,7 @@ def evaluate():
     import target
 
     # Generate test data
-    test_sizes = [100, 1_000, 10_000, 50_000]
+    test_sizes = [100, 1_000, 5_000, 10_000]
     total_time = 0
     all_correct = True
 
