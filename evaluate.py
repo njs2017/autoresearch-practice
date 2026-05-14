@@ -1,12 +1,13 @@
 """
-AutoResearch Practice — Generic Evaluator (IMMUTABLE)
+AutoResearch — Evaluator Template (IMMUTABLE)
 
-This file measures the quality of target.py.
-The agent CANNOT modify this file — it ensures fair comparison.
+INSTRUCTIONS:
+1. Replace the evaluate() function with YOUR domain's metric
+2. The only requirement: print "score: <number>" to stdout
+3. Once set up, NEVER modify this file again — it's the ground truth
 
-HOW TO CUSTOMIZE:
-Replace the evaluate() function with your domain's metric.
-The only requirement: print "score: <number>" to stdout.
+EXAMPLES INCLUDED BELOW — uncomment the one closest to your domain,
+or write your own following the same pattern.
 """
 
 import time
@@ -14,107 +15,92 @@ import importlib
 import traceback
 import sys
 
-# ============================================================
-# ⚠️  CUSTOMIZE THIS SECTION FOR YOUR DOMAIN
-# ============================================================
 
 def evaluate():
     """
     Import target.py and measure its performance.
-    Returns a scalar score (lower is better by default).
-
-    EXAMPLES BY DOMAIN:
-
-    1. SORTING ALGORITHM:
-       from target import sort_function
-       data = generate_test_data()
-       start = time.time()
-       result = sort_function(data)
-       elapsed = time.time() - start
-       assert result == sorted(data), "Incorrect!"
-       return elapsed
-
-    2. STRING PROCESSING:
-       from target import process
-       test_cases = load_test_cases()
-       correct = sum(1 for inp, exp in test_cases if process(inp) == exp)
-       return -correct  # negative because lower=better
-
-    3. COMPRESSION:
-       from target import compress, decompress
-       data = load_test_data()
-       compressed = compress(data)
-       assert decompress(compressed) == data, "Lossy!"
-       return len(compressed) / len(data)  # compression ratio
-
-    4. API RESPONSE TIME:
-       from target import handle_request
-       requests = load_benchmark_requests()
-       start = time.time()
-       for req in requests:
-           handle_request(req)
-       return time.time() - start
-
-    5. ML INFERENCE:
-       from target import predict
-       X_test, y_test = load_test_data()
-       preds = predict(X_test)
-       return mean_squared_error(y_test, preds)
+    Must return a single scalar number (lower = better).
+    
+    If your metric is "higher = better" (accuracy, Sharpe, etc.),
+    just negate it: return -accuracy
     """
 
-    # ── DEFAULT: Sorting benchmark (replace with your domain) ──
+    # ─── EXAMPLE: Sorting Algorithm ───────────────────────────────
     import random
     random.seed(42)
-
-    # Import the target module
     import target
+    importlib.reload(target)
 
-    # Generate test data
-    test_sizes = [100, 1_000, 5_000, 10_000]
+    sizes = [100, 1_000, 5_000, 10_000]
     total_time = 0
-    all_correct = True
 
-    for size in test_sizes:
-        data = [random.randint(-1_000_000, 1_000_000) for _ in range(size)]
+    for size in sizes:
+        data = [random.randint(-10**6, 10**6) for _ in range(size)]
         expected = sorted(data)
 
         start = time.time()
         result = target.sort(data.copy())
-        elapsed = time.time() - start
-        total_time += elapsed
+        total_time += time.time() - start
 
-        if result != expected:
-            all_correct = False
+        # CORRECTNESS CHECK — the output must be correct!
+        assert result == expected, f"Wrong output for size {size}!"
 
-    if not all_correct:
-        raise ValueError("CORRECTNESS CHECK FAILED — output does not match expected")
+    return total_time  # seconds, lower = better
 
-    return total_time  # lower is better (seconds)
+    # ─── EXAMPLE: Prompt Engineering ──────────────────────────────
+    # import target
+    # importlib.reload(target)
+    # TEST_CASES = [
+    #     {"input": "Great movie!", "expected": "positive"},
+    #     {"input": "Terrible.", "expected": "negative"},
+    # ]
+    # correct = sum(1 for tc in TEST_CASES
+    #               if target.classify(tc["input"]).strip().lower() == tc["expected"])
+    # return -(correct / len(TEST_CASES))  # negate: lower = better
+
+    # ─── EXAMPLE: Compression ─────────────────────────────────────
+    # import target
+    # importlib.reload(target)
+    # test_data = open("data/test_corpus.txt", "rb").read()
+    # compressed = target.compress(test_data)
+    # assert target.decompress(compressed) == test_data, "Lossy!"
+    # return len(compressed) / len(test_data)  # ratio, lower = better
+
+    # ─── EXAMPLE: API/Server Response Time ────────────────────────
+    # import target
+    # importlib.reload(target)
+    # requests = [{"method": "GET", "path": f"/item/{i}"} for i in range(100)]
+    # start = time.time()
+    # for req in requests:
+    #     target.handle(req)
+    # return time.time() - start  # seconds, lower = better
+
+    # ─── EXAMPLE: Game AI Win Rate ────────────────────────────────
+    # import target
+    # importlib.reload(target)
+    # wins = 0
+    # for game_seed in range(100):
+    #     result = play_game(target.decide_move, opponent=random_opponent, seed=game_seed)
+    #     if result == "win": wins += 1
+    # return -(wins / 100)  # negate: lower = better
 
 
-# ============================================================
-# DO NOT MODIFY BELOW THIS LINE
-# ============================================================
+# ══════════════════════════════════════════════════════════════════
+# DO NOT MODIFY BELOW — standard runner
+# ══════════════════════════════════════════════════════════════════
 
 def main():
     start_total = time.time()
-
     try:
-        # Reload target module to pick up changes
-        if 'target' in sys.modules:
-            importlib.reload(sys.modules['target'])
-
         score = evaluate()
-        elapsed_total = time.time() - start_total
-
+        elapsed = time.time() - start_total
         print(f"score: {score:.6f}")
-        print(f"elapsed_seconds: {elapsed_total:.1f}")
+        print(f"elapsed_seconds: {elapsed:.1f}")
         print(f"status: ok")
-
     except Exception as e:
-        elapsed_total = time.time() - start_total
+        elapsed = time.time() - start_total
         print(f"score: 0.000000")
-        print(f"elapsed_seconds: {elapsed_total:.1f}")
+        print(f"elapsed_seconds: {elapsed:.1f}")
         print(f"status: crash")
         print(f"error: {e}")
         traceback.print_exc()
